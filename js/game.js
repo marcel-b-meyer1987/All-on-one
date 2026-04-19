@@ -11,12 +11,15 @@ let animationID;
 let score = 0;
 
 const scoreDisp = document.getElementById("score");
+const modal = document.getElementById("modal");
+const modalScoreDisp = document.querySelector("#modal h1");
+const startBtn = document.getElementById("startBtn");
 const canvas = document.getElementById("canvas1");
 const ctx = canvas.getContext("2d");
 
-const projectiles = [];
-const enemies = [];
-const particles = [];
+let projectiles = [];
+let enemies = [];
+let particles = [];
 
 const resizeCanvas = () => {
     canvas.width = window.innerWidth;
@@ -26,6 +29,16 @@ const resizeCanvas = () => {
 resizeCanvas();
 
 const player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
+
+function hideMenu() {
+    modal.style.opacity = "0";
+    modal.style.userSelect = "none";
+}
+
+function showMenu() {
+    modal.style.opacity = "1";
+    modal.style.removeProperty("userSelect");
+}
 
 
 function spawnEnemies() {
@@ -78,8 +91,12 @@ function animate() {
 
         // check collision against player
         if (radialCollision(player, enemy)) {
-            console.log("GAME OVER");
+            if (gameMode === data.mode.DEBUG) console.log("GAME OVER");
+
+            gameState = data.state.GAME_OVER;
+            modalScoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
             cancelAnimationFrame(animationID);
+            showMenu();
         }
 
         // check collision against projectiles
@@ -166,8 +183,23 @@ function animate() {
 
 }
 
-animate();
-spawnEnemies();
+
+startBtn.addEventListener("click", e => {
+
+    // reset score
+    score = 0;
+    scoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
+
+    // reset object arrays to empty arrays
+    projectiles = [];
+    enemies = [];
+    particles = [];
+
+    hideMenu();
+    gameState = data.state.PLAYING;
+    animate();
+    spawnEnemies();
+});
 
 window.addEventListener("resize", (e) => {
     // console.log(e);
@@ -176,24 +208,24 @@ window.addEventListener("resize", (e) => {
 });
 
 window.addEventListener("click", (e) => {
-    if (gameMode === data.mode.DEBUG) console.log(projectiles);
+    if (gameState === data.state.PLAYING) {
+        if (gameMode === data.mode.DEBUG) console.log(projectiles);
 
-    const target = {
-        x: e.clientX, 
-        y: e.clientY
-    };
-    const dx = target.x - canvas.width * 0.5;
-    const dy = target.y - canvas.height * 0.5;
-    const angle = Math.atan2(dy, dx);
+        const target = {
+            x: e.clientX, 
+            y: e.clientY
+        };
+        const dx = target.x - canvas.width * 0.5;
+        const dy = target.y - canvas.height * 0.5;
+        const angle = Math.atan2(dy, dx);
 
-    const velocity = {
-        x: Math.cos(angle) * 6,
-        y: Math.sin(angle) * 6
-    };
-    
-    projectiles.push(new Projectile(player.x, player.y, 6, "white", velocity));
-
-    
+        const velocity = {
+            x: Math.cos(angle) * 6,
+            y: Math.sin(angle) * 6
+        };
+        
+        projectiles.push(new Projectile(player.x, player.y, 6, "white", velocity));
+    }  
     
 });
 
