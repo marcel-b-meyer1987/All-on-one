@@ -7,8 +7,10 @@ import { radialCollision } from "./utils.js";
 
 let gameMode = data.mode.LIVE;
 let gameState = data.state.MENU;
+let enemySpawningIntervalID = undefined;
 let animationID;
 let score = 0;
+let level = 1;
 
 const scoreDisp = document.getElementById("score");
 const modal = document.getElementById("modal");
@@ -28,7 +30,24 @@ const resizeCanvas = () => {
 
 resizeCanvas();
 
-const player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
+let player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
+
+function init() {
+
+    // reset player object
+    player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
+    
+    // reset score
+    score = 0;
+    scoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
+
+    // reset object arrays to empty arrays
+    projectiles = [];
+    enemies = [];
+    particles = [];
+
+    gameState = data.state.PLAYING;
+}
 
 function hideMenu() {
     modal.style.opacity = "0";
@@ -42,7 +61,7 @@ function showMenu() {
 
 
 function spawnEnemies() {
-    setInterval(() => {
+    enemySpawningIntervalID = setInterval(() => {
         const radius = Math.random() * (data.ENEMY_MAX_SIZE - data.ENEMY_MIN_SIZE) + data.ENEMY_MIN_SIZE;
         let x;
         let y;
@@ -95,6 +114,7 @@ function animate() {
 
             gameState = data.state.GAME_OVER;
             modalScoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
+            clearInterval(enemySpawningIntervalID);
             cancelAnimationFrame(animationID);
             showMenu();
         }
@@ -185,18 +205,8 @@ function animate() {
 
 
 startBtn.addEventListener("click", e => {
-
-    // reset score
-    score = 0;
-    scoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
-
-    // reset object arrays to empty arrays
-    projectiles = [];
-    enemies = [];
-    particles = [];
-
+    init();
     hideMenu();
-    gameState = data.state.PLAYING;
     animate();
     spawnEnemies();
 });
