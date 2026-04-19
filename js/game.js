@@ -1,15 +1,22 @@
 import { Player } from "./player.js";
-import  { Projectile } from "./projectile.js";
+import { Projectile } from "./projectile.js";
 import { Enemy } from "./enemy.js";
+import { Particle } from "./particle.js";
 import { data } from "./data.js";
 import { radialCollision } from "./utils.js";
 
-let gameMode = data.mode.DEBUG;
+let gameMode = data.mode.LIVE;
 let gameState = data.state.MENU;
 let animationID;
+let score = 0;
 
+const scoreDisp = document.getElementById("score");
 const canvas = document.getElementById("canvas1");
 const ctx = canvas.getContext("2d");
+
+const projectiles = [];
+const enemies = [];
+const particles = [];
 
 const resizeCanvas = () => {
     canvas.width = window.innerWidth;
@@ -18,11 +25,8 @@ const resizeCanvas = () => {
 
 resizeCanvas();
 
+const player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
 
-const player = new Player(canvas.width * 0.5, canvas.height * 0.5, 24, "teal");
-
-const projectiles = [];
-const enemies = [];
 
 function spawnEnemies() {
     setInterval(() => {
@@ -44,13 +48,13 @@ function spawnEnemies() {
         const dx = target.x - x;
         const dy = target.y - y;
         const angle = Math.atan2(dy, dx);
-        const color = "green";
-
+        const hue = Math.random() * 360;
+        const color = `hsl(${hue} 50% 50%)`;
         const velocity = {
             x: Math.cos(angle),
             y: Math.sin(angle)
         };        
-
+        
         enemies.push(new Enemy(x, y, radius, color, velocity));
         // console.log(enemies);
     }, data.ENEMY_INTERVAL);
@@ -61,7 +65,7 @@ function animate() {
     
     // clear canvas
     ctx.save();
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.restore();
 
@@ -72,8 +76,6 @@ function animate() {
         enemy.update();
         enemy.draw(ctx);
 
-
-
         // check collision against player
         if (radialCollision(player, enemy)) {
             console.log("GAME OVER");
@@ -82,18 +84,69 @@ function animate() {
 
         // check collision against projectiles
         projectiles.forEach((proj, projectileIndex) => {
-            // const dist = Math.hypot(proj.x - enemy.x, proj.y - enemy.y);
-            // if (dist - proj.radius - enemy.radius < 1) {
-            //     console.log("hit");
-            // }
+            
             if (radialCollision(proj, enemy)) {
-                setTimeout(() => {
-                    enemies.splice(enemyIndex, 1);
-                    projectiles.splice(projectileIndex, 1);
-                }, 0);
+
+                // increase score by 100 per hit
+                score += 100;
+                scoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
+
+                // draw explosion with particles
+                for (let i = 1; i < enemy.radius * 2; i++) {
+                    particles.push(new Particle(
+                        proj.x, 
+                        proj.y,
+                        Math.random() * 2, 
+                        enemy.color, 
+                        {
+                            x: (Math.random() - 0.5) * Math.random() * data.PARTICLE_MAX_SPEED,
+                            y: (Math.random() - 0.5) * Math.random() * data.PARTICLE_MAX_SPEED
+                        }
+                    ));
+                }
+
+                // first shrink, if radius is not too small already
+                if (enemy.radius - 10 >= 5) {
+                    enemy.radius -= 10;
+                    setTimeout(() => {
+                        projectiles.splice(projectileIndex, 1);
+                    }, 0);
+                // then remove from game, if radius is small enough
+                } else {
+                    
+                    // increase score by 250 for complete destruction of enemy
+                    score += 250;
+                    scoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
+
+                    setTimeout(() => {
+                        enemies.splice(enemyIndex, 1);
+                        projectiles.splice(projectileIndex, 1);
+                    }, 0);
+                }          
             } 
         });
 
+    });
+
+    // update + draw particles
+    particles.forEach((particle, index) => {
+
+        if (particle.alpha <= 0) {
+            particles.splice(index, 1); 
+        } else {
+            particle.update();
+            particle.draw(ctx);     
+        }
+        
+        // check if particles go off screen
+        if (particle.x + particle.radius < 0 ||
+            particle.x - particle.radius > canvas.width ||
+            particle.y + particle.radius < 0 ||
+            particle.y - particle.radius > canvas.height) {
+                particles.splice(index, 1);
+            }
+
+            
     });
 
     // update + draw projectiles
@@ -134,11 +187,11 @@ window.addEventListener("click", (e) => {
     const angle = Math.atan2(dy, dx);
 
     const velocity = {
-        x: Math.cos(angle),
-        y: Math.sin(angle)
+        x: Math.cos(angle) * 6,
+        y: Math.sin(angle) * 6
     };
     
-    projectiles.push(new Projectile(player.x, player.y, 6, "red", velocity));
+    projectiles.push(new Projectile(player.x, player.y, 6, "white", velocity));
 
     
     
