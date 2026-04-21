@@ -7,7 +7,6 @@ import { radialCollision } from "./utils.js";
 
 let gameMode = data.mode.LIVE;
 let gameState = data.state.MENU;
-let enemySpawningIntervalID = undefined;
 let animationID;
 let enemyIntervalID;
 let score = 0;
@@ -47,17 +46,24 @@ function init() {
     enemies = [];
     particles = [];
 
-    gameState = data.state.PLAYING;
+    gameState = data.state.PLAYING;    
 }
 
 function hideMenu() {
     modal.style.opacity = "0";
     modal.style.userSelect = "none";
+    startBtn.removeEventListener("click");
 }
 
 function showMenu() {
     modal.style.opacity = "1";
     modal.style.removeProperty("userSelect");
+    startBtn.addEventListener("click", e => {
+       init();
+       hideMenu();
+       animate();
+       spawnEnemies();
+  });
 }
 
 
@@ -205,12 +211,7 @@ function animate() {
 }
 
 
-startBtn.addEventListener("click", e => {
-    init();
-    hideMenu();
-    animate();
-    spawnEnemies();
-});
+showMenu();
 
 window.addEventListener("resize", (e) => {
     // console.log(e);
