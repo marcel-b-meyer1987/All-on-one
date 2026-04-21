@@ -9,6 +9,7 @@ let gameMode = data.mode.LIVE;
 let gameState = data.state.MENU;
 let enemySpawningIntervalID = undefined;
 let animationID;
+let enemyIntervalID;
 let score = 0;
 let level = 1;
 
@@ -61,7 +62,7 @@ function showMenu() {
 
 
 function spawnEnemies() {
-    enemySpawningIntervalID = setInterval(() => {
+    enemyIntervalID = setInterval(() => {
         const radius = Math.random() * (data.ENEMY_MAX_SIZE - data.ENEMY_MIN_SIZE) + data.ENEMY_MIN_SIZE;
         let x;
         let y;
@@ -114,7 +115,7 @@ function animate() {
 
             gameState = data.state.GAME_OVER;
             modalScoreDisp.innerText = score.toString().padStart(data.SCORE_MAX_DIGITS);
-            clearInterval(enemySpawningIntervalID);
+            clearInterval(enemyIntervalID);
             cancelAnimationFrame(animationID);
             showMenu();
         }
