@@ -9,6 +9,7 @@ let gameMode = data.mode.LIVE;
 let gameState = data.state.MENU;
 let animationID;
 let enemyIntervalID;
+let player;
 let score = 0;
 let level = 1;
 
@@ -28,13 +29,12 @@ const resizeCanvas = () => {
     canvas.height = window.innerHeight;
 }
 
-resizeCanvas();
-
-let player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
-
 function init() {
+    // resize canvas by default, in case window size has changed + hide the menu
+    resizeCanvas();
+    hideMenu();
 
-    // reset player object
+    // create player object
     player = new Player(canvas.width * 0.5, canvas.height * 0.5, 10, "white");
     
     // reset score
@@ -45,25 +45,24 @@ function init() {
     projectiles = [];
     enemies = [];
     particles = [];
+    
+    // start animation + enemy spawning loops
+    animate();
+    spawnEnemies();
 
-    gameState = data.state.PLAYING;    
+    gameState = data.state.PLAYING;
 }
 
 function hideMenu() {
     modal.style.opacity = "0";
     modal.style.userSelect = "none";
-    startBtn.removeEventListener("click");
+    startBtn.removeEventListener("click", init);
 }
 
 function showMenu() {
     modal.style.opacity = "1";
     modal.style.removeProperty("userSelect");
-    startBtn.addEventListener("click", e => {
-       init();
-       hideMenu();
-       animate();
-       spawnEnemies();
-  });
+    startBtn.addEventListener("click", init);
 }
 
 
